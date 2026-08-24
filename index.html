@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spidey RC Info</title>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --bg: #0f0f13;
+            --card: #1a1a20;
+            --text: #ffffff;
+            --gray: #888;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: var(--primary);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a35;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            text-transform: uppercase;
+        }
+        input:focus { border-color: var(--primary); }
+        button {
+            padding: 12px 25px;
+            background: var(--primary);
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover { opacity: 0.8; }
+        
+        #result-area { margin-top: 20px; display: none; }
+        
+        .category {
+            background: var(--card);
+            margin-bottom: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            border-left: 3px solid var(--primary);
+        }
+        .cat-title {
+            background: #252530;
+            padding: 10px 15px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 15px;
+            border-bottom: 1px solid #2a2a35;
+            font-size: 14px;
+            gap: 20px;
+        }
+        .row:last-child { border-bottom: none; }
+        
+        .key { 
+            color: var(--gray); 
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .val { 
+            text-align: right; 
+            font-weight: 500; 
+            word-break: break-word;
+            color: #ddd;
+        }
+
+        .loader {
+            border: 4px solid #333;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .footer { margin-top: 40px; text-align: center; color: var(--gray); font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Vehicle Info Fetcher</h1>
+        
+        <div class="search-box">
+            <input type="text" id="rcInput" placeholder="Enter RC (e.g., DL8CX1234)">
+            <button onclick="fetchData()">FETCH</button>
+        </div>
+
+        <div class="loader" id="loader"></div>
+
+        <div id="result-area"></div>
+
+        <div class="footer">
+            Developed by <a href="https://t.me/Digittalphantom" style="color: var(--primary); text-decoration: none;" target="_blank">@Oriss01</a>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const input = document.getElementById('rcInput').value.trim();
+            const resultArea = document.getElementById('result-area');
+            const loader = document.getElementById('loader');
+
+            if(!input) return alert("Please enter a Vehicle Number");
+
+            resultArea.style.display = 'none';
+            resultArea.innerHTML = '';
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch(`/details=${input}`);
+                const data = await response.json();
+
+                loader.style.display = 'none';
+                resultArea.style.display = 'block';
+
+                if(data.status === "Failed" || data.error) {
+                    resultArea.innerHTML = `<div class='category'><div class='row' style='color:red; justify-content:center;'>${data.message || data.error}</div></div>`;
+                    return;
+                }
+
+                for (const [category, details] of Object.entries(data)) {
+                    if (category === "Developer Info") continue; 
+
+                    let catHtml = `<div class="category"><div class="cat-title">${category}</div>`;
+                    
+                    for (const [key, val] of Object.entries(details)) {
+                        catHtml += `
+                            <div class="row">
+                                <span class="key">${key}</span>
+                                <span class="val">${val}</span>
+                            </div>`;
+                    }
+                    catHtml += `</div>`;
+                    resultArea.innerHTML += catHtml;
+                }
+
+            } catch (err) {
+                loader.style.display = 'none';
+                alert("Error fetching data");
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
